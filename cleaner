@@ -1,0 +1,89 @@
+# -*- coding: UTF-8 -*-
+
+import os
+import os.path
+import argparse
+import time
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--rootdir', type=str, default='.',
+                       help='指定根目录')
+    parser.add_argument('--type', type=str, default='',
+                       help=u'命令类型，默认是直接删除文件，指定 svn 则调用 svn del')
+    args = parser.parse_args()
+    return args
+
+
+def file_extension(path):
+    return os.path.splitext(path)[1]
+
+
+def find(dir):
+    IMAGE = []
+    FILE = []
+
+    startTime = time.time()
+
+    # 三个参数：分别返回 1.父目录 2.所有文件夹名字（不含路径）3.所有文件名字
+    for parent, dirnames, filenames in os.walk(dir):
+        for filename in filenames:
+            if "\\build" in parent or "\\.idea" in parent or "\\.gradle" in parent:
+                continue
+
+            ext = file_extension(filename)
+            if ext == ".png" or ext == ".jpg":
+                IMAGE.append(os.path.join(parent, filename))
+            elif ext == ".java" or ext == ".kt" or ext == ".xml":
+                FILE.append(os.path.join(parent, filename))
+
+    endTime = time.time()
+    print("== It take %d second to find images and files.." % (endTime - startTime))
+
+    return IMAGE, FILE
+
+
+def contain(target, file):
+    fopen = open(file, 'r', encoding='UTF-8')
+    for line in fopen:
+        name = os.path.basename(target).split(".")[0]
+        if name in line:
+            fopen.close()
+            return True
+
+    fopen.close()
+    return False
+
+def clean(images, files):
+    startTime = time.time()
+    cnt = 0
+
+    for image in images:
+        isUsed = False
+
+        for file in files:
+            if(contain(image, file)):
+                isUsed = True
+                #print("++ Used : %s, %s" % (image, file))
+                continue
+
+        if isUsed == False:
+            cnt += 1
+            print(">> Redundant : " + image)
+
+            if args.type == "svn":
+                os.system("svn del " + image)
+            else:
+                os.remove(image)
+
+    endTime = time.time()
+    print("== It take %d second to delete %d redundant images.." % ((endTime - startTime), cnt))
+
+
+if __name__ == '__main__':
+    args = parse_args()
+
+    IMAGE, FILE = find(args.rootdir)
+    print("** Find Images : %d \n** Find Files : %d" % (len(IMAGE) , len(FILE)))
+
+    clean(IMAGE, FILE)
