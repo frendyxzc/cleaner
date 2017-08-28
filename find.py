@@ -83,3 +83,28 @@ def findColors(colorFiles):
     print("== It take %d second to find colors.." % (endTime - startTime))
 
     return COLOR
+
+
+def findRedundantColor(colors, files):
+    CNT = 0
+    COLOR_XML_FILE = []
+    COLOR_REDUNDANT = []
+
+    for color in colors:
+        isUsed = False
+
+        for file in files:
+            if "color.xml" in file:
+                COLOR_XML_FILE.append(file)
+            if "color.xml" not in file and contain(color, file):
+                isUsed = True
+                #print("++ Used : %s, %s" % (color, file))
+                continue
+
+        if isUsed == False:
+            CNT += 1
+            print(">> Redundant : " + color)
+
+            COLOR_REDUNDANT.append(color)
+
+    return COLOR_XML_FILE, COLOR_REDUNDANT, CNT

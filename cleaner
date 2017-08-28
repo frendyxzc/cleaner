@@ -8,7 +8,7 @@ import os
 import os.path
 import time
 
-from find import findFiles, findColors, contain, containImage, containOne
+from find import findFiles, findColors, findRedundantColor, contain, containImage, containOne
 
 
 def parse_args():
@@ -50,27 +50,8 @@ def cleanImage(images, files):
 
 def cleanColor(colors, files):
     startTime = time.time()
-    cnt = 0
 
-    COLOR_XML_FILE = []
-    COLOR_REDUNDANT = []
-
-    for color in colors:
-        isUsed = False
-
-        for file in files:
-            if "color.xml" not in file and contain(color, file):
-                isUsed = True
-                #print("++ Used : %s, %s" % (color, file))
-                continue
-
-            if "color.xml" in file:
-                COLOR_XML_FILE.append(file)
-
-        if isUsed == False:
-            cnt += 1
-            COLOR_REDUNDANT.append(color)
-            print(">> Redundant : " + color)
+    COLOR_XML_FILE, COLOR_REDUNDANT, CNT = findRedundantColor(colors, files)
 
     for file in COLOR_XML_FILE:
         with open(file, "r", encoding="utf-8") as f:
@@ -83,7 +64,7 @@ def cleanColor(colors, files):
                 fw.write(line)
 
     endTime = time.time()
-    print("== It take %d second to delete %d redundant colors.." % ((endTime - startTime), cnt))
+    print("== It take %d second to delete %d redundant colors.." % ((endTime - startTime), CNT))
 
 
 if __name__ == '__main__':
@@ -92,20 +73,20 @@ if __name__ == '__main__':
     IMAGE, FILE, COLOR_FILE = findFiles(args.rootdir)
 
     if args.target == "image":
-        print("** Find Images : %d" % len(IMAGE))
         print("** Find Files : %d" % len(FILE))
+        print("** Find Images : %d" % len(IMAGE))
         cleanImage(IMAGE, FILE)
 
     elif args.target == "color":
         COLOR = findColors(COLOR_FILE)
-        print("** Find Colors : %d" % len(COLOR))
         print("** Find Files : %d" % len(FILE))
+        print("** Find Colors : %d" % len(COLOR))
         cleanColor(COLOR, FILE)
 
     else:
         COLOR = findColors(COLOR_FILE)
-        print("** Find Images : %d" % len(IMAGE))
         print("** Find Files : %d" % len(FILE))
+        print("** Find Images : %d" % len(IMAGE))
         print("** Find Colors : %d" % len(COLOR))
         cleanImage(IMAGE, FILE)
         cleanColor(COLOR, FILE)
