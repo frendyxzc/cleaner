@@ -1,60 +1,29 @@
 # -*- coding: UTF-8 -*-
+#
+# frendyxzc@126.com
+# 2017.08.28
 
+import argparse
 import os
 import os.path
-import argparse
 import time
+
+from find import findFiles, findColors, contain, containImage, containOne
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--rootdir', type=str, default='.',
                        help='指定根目录')
-    parser.add_argument('--type', type=str, default='',
-                       help=u'命令类型，默认是直接删除文件，指定 svn 则调用 svn del')
+    parser.add_argument('--type', type=str, default='rm',
+                       help=u'命令类型 [rm, svn]，默认是直接删除文件，指定 svn 则调用 svn del')
+    parser.add_argument('--target', type=str, default='all',
+                       help=u'清理对象 [all, image, color]')
     args = parser.parse_args()
     return args
 
 
-def file_extension(path):
-    return os.path.splitext(path)[1]
-
-
-def find(dir):
-    IMAGE = []
-    FILE = []
-
-    startTime = time.time()
-
-    # 三个参数：分别返回 1.父目录 2.所有文件夹名字（不含路径）3.所有文件名字
-    for parent, dirnames, filenames in os.walk(dir):
-        for filename in filenames:
-            if "\\build" in parent or "\\.idea" in parent or "\\.gradle" in parent:
-                continue
-
-            ext = file_extension(filename)
-            if ext == ".png" or ext == ".jpg":
-                IMAGE.append(os.path.join(parent, filename))
-            elif ext == ".java" or ext == ".kt" or ext == ".xml":
-                FILE.append(os.path.join(parent, filename))
-
-    endTime = time.time()
-    print("== It take %d second to find images and files.." % (endTime - startTime))
-
-    return IMAGE, FILE
-
-
-def contain(target, file):
-    fopen = open(file, 'r', encoding='UTF-8')
-    for line in fopen:
-        name = os.path.basename(target).split(".")[0]
-        if name in line:
-            fopen.close()
-            return True
-
-    fopen.close()
-    return False
-
-def clean(images, files):
+def cleanImage(images, files):
     startTime = time.time()
     cnt = 0
 
@@ -62,7 +31,7 @@ def clean(images, files):
         isUsed = False
 
         for file in files:
-            if(contain(image, file)):
+            if(containImage(image, file)):
                 isUsed = True
                 #print("++ Used : %s, %s" % (image, file))
                 continue
@@ -79,11 +48,64 @@ def clean(images, files):
     endTime = time.time()
     print("== It take %d second to delete %d redundant images.." % ((endTime - startTime), cnt))
 
+def cleanColor(colors, files):
+    startTime = time.time()
+    cnt = 0
+
+    COLOR_XML_FILE = []
+    COLOR_REDUNDANT = []
+
+    for color in colors:
+        isUsed = False
+
+        for file in files:
+            if "color.xml" not in file and contain(color, file):
+                isUsed = True
+                #print("++ Used : %s, %s" % (color, file))
+                continue
+
+            if "color.xml" in file:
+                COLOR_XML_FILE.append(file)
+
+        if isUsed == False:
+            cnt += 1
+            COLOR_REDUNDANT.append(color)
+            print(">> Redundant : " + color)
+
+    for file in COLOR_XML_FILE:
+        with open(file, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        with open(file, "w", encoding="utf-8") as fw:
+            for line in lines:
+                if containOne(COLOR_REDUNDANT, line):
+                    continue
+                fw.write(line)
+
+    endTime = time.time()
+    print("== It take %d second to delete %d redundant colors.." % ((endTime - startTime), cnt))
+
 
 if __name__ == '__main__':
     args = parse_args()
 
-    IMAGE, FILE = find(args.rootdir)
-    print("** Find Images : %d \n** Find Files : %d" % (len(IMAGE) , len(FILE)))
+    IMAGE, FILE, COLOR_FILE = findFiles(args.rootdir)
 
-    clean(IMAGE, FILE)
+    if args.target == "image":
+        print("** Find Images : %d" % len(IMAGE))
+        print("** Find Files : %d" % len(FILE))
+        cleanImage(IMAGE, FILE)
+
+    elif args.target == "color":
+        COLOR = findColors(COLOR_FILE)
+        print("** Find Colors : %d" % len(COLOR))
+        print("** Find Files : %d" % len(FILE))
+        cleanColor(COLOR, FILE)
+
+    else:
+        COLOR = findColors(COLOR_FILE)
+        print("** Find Images : %d" % len(IMAGE))
+        print("** Find Files : %d" % len(FILE))
+        print("** Find Colors : %d" % len(COLOR))
+        cleanImage(IMAGE, FILE)
+        cleanColor(COLOR, FILE)
