@@ -4,11 +4,11 @@ Auto find and remove the redundant resources of image in Android Studio Project.
 
 ## Usage
 
-![image](screenshot/001.png)
+![image](screenshot/0001.png)
 
 ## Sample
 
-![image](screenshot/002.jpg)
+![image](screenshot/0002.jpg)
 
 ## Contact me
 
