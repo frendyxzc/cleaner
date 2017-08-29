@@ -1,10 +1,10 @@
 # cleaner
 
-Auto find and remove the redundant resources of image or color in Android Studio Project..
+Auto find and remove the redundant resources of image, color or drawable in Android Studio Project..
 
 ## Usage
 
-![image](screenshot/0001.png)
+![image](screenshot/001.png)
 
 ## Sample
 

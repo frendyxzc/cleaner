@@ -14,6 +14,7 @@ def findFiles(dir):
     IMAGE = []
     FILE = []
     COLOR = []
+    DRAWABLE = []
 
     startTime = time.time()
 
@@ -32,10 +33,13 @@ def findFiles(dir):
             if "color.xml" in filename:
                 COLOR.append(os.path.join(parent, filename))
 
+            if "\\drawable" in parent and ext == ".xml":
+                DRAWABLE.append(os.path.join(parent, filename))
+
     endTime = time.time()
     print("== It take %d second to find files.." % (endTime - startTime))
 
-    return IMAGE, FILE, COLOR
+    return IMAGE, FILE, COLOR, DRAWABLE
 
 
 def file_extension(path):
@@ -43,18 +47,22 @@ def file_extension(path):
 
 
 def contain(target, file):
-    fopen = open(file, 'r', encoding='UTF-8')
-    for line in fopen:
-        if target in line:
-            fopen.close()
-            return True
+    try:
+        fopen = open(file, 'r', encoding='UTF-8')
+        for line in fopen:
+            if target in line:
+                fopen.close()
+                return True
 
-    fopen.close()
-    return False
+        fopen.close()
+        return False
+
+    except:
+        return False
 
 
-def containImage(target, file):
-    name = os.path.basename(target).split(".")[0]
+def containPath(path, file):
+    name = os.path.basename(path).split(".")[0]
     return contain(name, file)
 
 

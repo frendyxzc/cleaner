@@ -8,7 +8,7 @@ import os
 import os.path
 import time
 
-from find import findFiles, findColors, findRedundantColor, contain, containImage, containOne
+from find import findFiles, findColors, findRedundantColor, contain, containPath, containOne
 
 
 def parse_args():
@@ -18,7 +18,7 @@ def parse_args():
     parser.add_argument('--type', type=str, default='rm',
                        help=u'命令类型 [rm, svn]，默认是直接删除文件，指定 svn 则调用 svn del')
     parser.add_argument('--target', type=str, default='all',
-                       help=u'清理对象 [all, image, color]')
+                       help=u'清理对象 [all, image, color, drawable]')
     args = parser.parse_args()
     return args
 
@@ -31,7 +31,7 @@ def cleanImage(images, files):
         isUsed = False
 
         for file in files:
-            if(containImage(image, file)):
+            if(containPath(image, file)):
                 isUsed = True
                 #print("++ Used : %s, %s" % (image, file))
                 continue
@@ -66,11 +66,35 @@ def cleanColor(colors, files):
     endTime = time.time()
     print("== It take %d second to delete %d redundant colors.." % ((endTime - startTime), CNT))
 
+def cleanDrawable(drawables, files):
+    startTime = time.time()
+    cnt = 0
+
+    for drawable in drawables:
+        isUsed = False
+
+        for file in files:
+            if(containPath(drawable, file)):
+                isUsed = True
+                #print("++ Used : %s, %s" % (drawable, file))
+                continue
+
+        if isUsed == False:
+            cnt += 1
+            print(">> Redundant : " + drawable)
+
+            if args.type == "svn":
+                os.system("svn del " + drawable)
+            else:
+                os.remove(drawable)
+
+    endTime = time.time()
+    print("== It take %d second to delete %d redundant drawables.." % ((endTime - startTime), cnt))
 
 if __name__ == '__main__':
     args = parse_args()
 
-    IMAGE, FILE, COLOR_FILE = findFiles(args.rootdir)
+    IMAGE, FILE, COLOR_FILE, DRAWABLE = findFiles(args.rootdir)
 
     if args.target == "image":
         print("** Find Files : %d" % len(FILE))
@@ -83,10 +107,17 @@ if __name__ == '__main__':
         print("** Find Colors : %d" % len(COLOR))
         cleanColor(COLOR, FILE)
 
+    elif args.target == "drawable":
+        print("** Find Files : %d" % len(FILE))
+        print("** Find Drawables : %d" % len(DRAWABLE))
+        cleanDrawable(DRAWABLE, FILE)
+
     else:
         COLOR = findColors(COLOR_FILE)
         print("** Find Files : %d" % len(FILE))
         print("** Find Images : %d" % len(IMAGE))
+        print("** Find Drawables : %d" % len(DRAWABLE))
         print("** Find Colors : %d" % len(COLOR))
         cleanImage(IMAGE, FILE)
+        cleanDrawable(DRAWABLE, FILE)
         cleanColor(COLOR, FILE)
