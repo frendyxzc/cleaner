@@ -118,6 +118,6 @@ if __name__ == '__main__':
         print("** Find Images : %d" % len(IMAGE))
         print("** Find Drawables : %d" % len(DRAWABLE))
         print("** Find Colors : %d" % len(COLOR))
-        cleanImage(IMAGE, FILE)
         cleanDrawable(DRAWABLE, FILE)
+        cleanImage(IMAGE, FILE)
         cleanColor(COLOR, FILE)
